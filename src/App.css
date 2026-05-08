@@ -1,0 +1,179 @@
+.app-shell {
+  min-height: 100dvh;
+  background: #1f2025;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.phone-layout {
+  width: 100%;
+  max-width: 390px;
+  background: #e6dba7;
+  color: #1f1c1d;
+  padding: 1.4rem 1rem 2.2rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+.page-header {
+  text-align: center;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 8vw, 2.9rem);
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.emoji-line {
+  margin: 0.9rem 0 1rem;
+  font-size: 1.7rem;
+}
+
+.date-nav {
+  display: grid;
+  grid-template-columns: 18px 1fr 18px;
+  align-items: center;
+  column-gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.arrow-btn {
+  border: none;
+  background: transparent;
+  color: #252525;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0;
+}
+
+.arrow-btn:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.date-chips {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.4rem;
+}
+
+.date-chip {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #f3f3f3;
+  color: #2c2c2c;
+  min-height: 54px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.72rem;
+  line-height: 1.05;
+  cursor: pointer;
+}
+
+.date-chip strong {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.date-chip.active {
+  background: #bbbdc6;
+  border-color: rgba(0, 0, 0, 0.36);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+}
+
+.content-section h2 {
+  font-size: 2rem;
+  margin: 0.9rem 0 0.55rem;
+  line-height: 1.05;
+  font-weight: 600;
+}
+
+.content-section + .content-section {
+  margin-top: 1.1rem;
+}
+
+.card {
+  background: #efefef;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 0.9rem;
+}
+
+.image-placeholder {
+  width: 100%;
+  max-width: 260px;
+  min-height: 165px;
+  margin: 0 auto;
+  background: #cccccf;
+  color: #2e2e2e;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+.day-image {
+  width: 100%;
+  max-width: 260px;
+  height: 165px;
+  display: block;
+  margin: 0 auto;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.card-title {
+  text-align: center;
+  margin: 0.75rem 0 0;
+  font-size: 1.5rem;
+  line-height: 1.05;
+  font-weight: 500;
+}
+
+.text-card {
+  min-height: 134px;
+}
+
+.text-card ul {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.text-card li,
+.text-card p,
+.text-card a {
+  font-size: 1.06rem;
+  color: #2a2a2a;
+}
+
+.text-card a {
+  text-decoration-thickness: 1px;
+}
+
+.last-section {
+  padding-bottom: 1.1rem;
+}
+
+@media (max-width: 360px) {
+  .phone-layout {
+    padding-inline: 0.75rem;
+  }
+
+  .content-section h2 {
+    font-size: 1.75rem;
+  }
+
+  .card-title {
+    font-size: 1.65rem;
+  }
+}
