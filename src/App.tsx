@@ -23,6 +23,7 @@ type TripDay = {
 
 const tripStartDate = new Date(2026, 5, 28)
 const tripLength = 9
+const publicAsset = (fileName: string) => `${import.meta.env.BASE_URL}${fileName}`
 
 const tripDays: TripDay[] = Array.from({ length: tripLength }, (_, index) => {
   const currentDate = new Date(tripStartDate)
@@ -186,12 +187,12 @@ tripDays[1] = {
   location: {
     name: 'Downtown Banff (Banff Ave & Mountain View)',
     imageLabel: 'Banff town and mountain view',
-    imageSrc: '/day2-location.png',
+    imageSrc: publicAsset('day2-location.png'),
   },
   accommodations: {
     name: 'Canmore Lodging',
     imageLabel: 'Accommodation exterior',
-    imageSrc: '/day2-accomodation.png',
+    imageSrc: publicAsset('day2-accomodation.png'),
   },
   itinerary: [
     'Breakfast and coffee in Banff town',
@@ -204,43 +205,43 @@ tripDays[1] = {
 tripDays[2].location = {
   ...tripDays[2].location,
   imageLabel: 'Day 3 location view',
-  imageSrc: '/day3-location.png',
+  imageSrc: publicAsset('day3-location.png'),
 }
 
 tripDays[3].location = {
   ...tripDays[3].location,
   imageLabel: 'Day 4 location view',
-  imageSrc: '/day4-location.png',
+  imageSrc: publicAsset('day4-location.png'),
 }
 
 tripDays[4].location = {
   ...tripDays[4].location,
   imageLabel: 'Day 5 location view',
-  imageSrc: '/day5-location.png',
+  imageSrc: publicAsset('day5-location.png'),
 }
 
 tripDays[5].location = {
   ...tripDays[5].location,
   imageLabel: 'Day 6 location view',
-  imageSrc: '/day6-location.png',
+  imageSrc: publicAsset('day6-location.png'),
 }
 
 tripDays[6].location = {
   ...tripDays[6].location,
   imageLabel: 'Day 7 location view',
-  imageSrc: '/day7-location.png',
+  imageSrc: publicAsset('day7-location.png'),
 }
 
 tripDays[7].location = {
   ...tripDays[7].location,
   imageLabel: 'Day 8 location view',
-  imageSrc: '/day8-location.png',
+  imageSrc: publicAsset('day8-location.png'),
 }
 
 tripDays[8].location = {
   ...tripDays[8].location,
   imageLabel: 'Day 9 location view',
-  imageSrc: '/day9-location.png',
+  imageSrc: publicAsset('day9-location.png'),
 }
 
 for (let dayIndex = 1; dayIndex <= 4; dayIndex += 1) {
@@ -248,7 +249,7 @@ for (let dayIndex = 1; dayIndex <= 4; dayIndex += 1) {
     ...tripDays[dayIndex].accommodations,
     name: 'Canmore Mountain Lodge',
     imageLabel: 'Accommodation used for Days 2 through 5',
-    imageSrc: '/day2-accomodation.png',
+    imageSrc: publicAsset('day2-accomodation.png'),
   }
 }
 
@@ -257,7 +258,7 @@ for (let dayIndex = 5; dayIndex <= 6; dayIndex += 1) {
     ...tripDays[dayIndex].accommodations,
     name: 'Lake Louise Lodge',
     imageLabel: 'Accommodation used for Days 6 and 7',
-    imageSrc: '/day6-accomodation.png',
+    imageSrc: publicAsset('day6-accomodation.png'),
   }
 }
 
@@ -266,7 +267,7 @@ for (let dayIndex = 7; dayIndex <= 8; dayIndex += 1) {
     ...tripDays[dayIndex].accommodations,
     name: 'Calgary Downtown Hotel',
     imageLabel: 'Accommodation used for Days 8 and 9',
-    imageSrc: '/day8-accomodation.png',
+    imageSrc: publicAsset('day8-accomodation.png'),
   }
 }
 
