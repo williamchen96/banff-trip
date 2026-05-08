@@ -195,9 +195,12 @@ tripDays[1] = {
     imageSrc: publicAsset('day2-accomodation.png'),
   },
   itinerary: [
-    'Breakfast and coffee in Banff town',
-    'Explore Banff Avenue and local shops',
-    'Scenic sunset walk and dinner nearby',
+    'RentCar -> H-mart Shopping ( w/brunch)',
+    'Easy Day',
+    'Johnston canyon hiking (2hr) 🏔️',
+    'Open top touring (1.5hr)',
+    'Banff Gondola (1.5hr) 🚠',
+    'BBQ Dinner 🍖'
   ],
   photosNote: 'Add favorite Day 2 street and mountain photos here.',
 }
@@ -208,11 +211,27 @@ tripDays[2].location = {
   imageSrc: publicAsset('day3-location.png'),
 }
 
+tripDays[2].itinerary = [
+  'Lake louise day ( 6:30 bus ) 🚌',
+  'Hard hiking ( 6 hr , R9.5mile, E520m) 🏔️',
+  'Plain of six->lake agnes->beehive hiking',
+  'Plain of six tea /lake agnes tea house',
+  'Birthday dinner ( Banff Restaurant )'
+]
+
 tripDays[3].location = {
   ...tripDays[3].location,
   imageLabel: 'Day 4 location view',
   imageSrc: publicAsset('day4-location.png'),
 }
+
+tripDays[3].itinerary = [
+  'Golden skybridge/Emerald Kayak day 🚠🛶',
+  'Easy day',
+  'Golden Sky bridge ( Zipline, Railrider option)',
+  'Lake Emerald ( Kayak or Canoe ) 🛶',
+  'BBQ Dinner 🍖'
+]
 
 tripDays[4].location = {
   ...tripDays[4].location,
@@ -220,11 +239,27 @@ tripDays[4].location = {
   imageSrc: publicAsset('day5-location.png'),
 }
 
+tripDays[4].itinerary = [
+  'Lake Moraine Day (6:30 bus) 🚌',
+  'Hard hiking ( 5.5 hr , R6.9mile, E725m) 🏔️',
+  'Sentinal pass hiking',
+  'Canmore dinner ( restaurant ) or BBQ'
+]
+
 tripDays[5].location = {
   ...tripDays[5].location,
   imageLabel: 'Day 6 location view',
   imageSrc: publicAsset('day6-location.png'),
 }
+
+tripDays[5].itinerary = [
+    'Icefield parkway/Columbia ice field day 🚗',
+    'Easy day',
+    'Icefield parkway scenic drive (Unesco Heritage) 🚗',
+    '(stop; peyto lake, mistaya canyon, parke ridge trail)',
+    'Columbia icefield tour ( 3:30~6:30PM) 🚌',
+    'BBQ Dinner 🍖'
+]
 
 tripDays[6].location = {
   ...tripDays[6].location,
@@ -232,17 +267,43 @@ tripDays[6].location = {
   imageSrc: publicAsset('day7-location.png'),
 }
 
-tripDays[7].location = {
+tripDays[6].itinerary = [
+  'Hot spring / spirit island(cruise) day ♨️🛳️',
+  'Hard day',
+  'Sulphur skyline hiking ( 4hr, R5 mile, E700m)',
+  'Mitte hot spring ( sulphur skyline enterance, 2 hr ) ♨️',
+  'Maligne lake curise ( 3:30~5:00PM) 🛳️', 
+  'BBQ Dinner 🍖'
+]
+
+tripDays[7].location = { 
   ...tripDays[7].location,
   imageLabel: 'Day 8 location view',
   imageSrc: publicAsset('day8-location.png'),
 }
+
+tripDays[7].itinerary = [
+    'hinton->Jesper->banff->Calgery',
+    'Easy day',
+    'Pyramid Lake Trail & Pyramid island hiking 🏔',
+    'Icefield parkway drive ( Unesco Heritage) 🚗',
+    ' ( Stop; Sunwatpta fall, Athabasca falls )',
+    'Calgery Dinner ( Restaur, if late togo food)',
+]   
 
 tripDays[8].location = {
   ...tripDays[8].location,
   imageLabel: 'Day 9 location view',
   imageSrc: publicAsset('day9-location.png'),
 }
+
+tripDays[8].itinerary = [
+    'Calgery Stampede Festival all day 🎉',
+    'Easy Day',
+    'Rodeo show  ( 1:30 PM ~ 3 :30 PM) 🐂',
+    ' Stampede night show  ( 7:30~9:30PM)',
+    'Festival food truck ( lunch/snack/dinner ) 🌭🍔🍟',
+]
 
 for (let dayIndex = 1; dayIndex <= 4; dayIndex += 1) {
   tripDays[dayIndex].accommodations = {
