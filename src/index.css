@@ -6,11 +6,18 @@ html,
 body,
 #root {
   margin: 0;
+  height: 100%;
   min-height: 100%;
 }
 
 body {
   font-family: Georgia, 'Times New Roman', serif;
+  background: #e6dba7;
+}
+
+#root {
+  width: 100%;
+  min-height: 100dvh;
 }
 
 button,

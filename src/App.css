@@ -1,6 +1,7 @@
 .app-shell {
   min-height: 100dvh;
-  background: #1f2025;
+  width: 100%;
+  background: #e6dba7;
   display: flex;
   justify-content: center;
   padding: 1rem;
@@ -10,10 +11,11 @@
 .phone-layout {
   width: 100%;
   max-width: 390px;
+  min-height: 100%;
   background: #e6dba7;
   color: #1f1c1d;
   padding: 1.4rem 1rem 2.2rem;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: none;
   box-sizing: border-box;
 }
 
@@ -103,13 +105,13 @@
   background: #efefef;
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.12);
-  padding: 0.9rem;
+  padding: 0.45rem 0.45rem 0.65rem;
 }
 
 .image-placeholder {
   width: 100%;
-  max-width: 260px;
-  min-height: 165px;
+  max-width: none;
+  min-height: 190px;
   margin: 0 auto;
   background: #cccccf;
   color: #2e2e2e;
@@ -122,8 +124,8 @@
 
 .day-image {
   width: 100%;
-  max-width: 260px;
-  height: 165px;
+  max-width: none;
+  height: 190px;
   display: block;
   margin: 0 auto;
   object-fit: cover;
@@ -132,7 +134,7 @@
 
 .card-title {
   text-align: center;
-  margin: 0.75rem 0 0;
+  margin: 0.55rem 0 0;
   font-size: 1.5rem;
   line-height: 1.05;
   font-weight: 500;
@@ -162,6 +164,18 @@
 
 .last-section {
   padding-bottom: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    padding: 0;
+  }
+
+  .phone-layout {
+    max-width: none;
+    min-height: 100dvh;
+    border: none;
+  }
 }
 
 @media (max-width: 360px) {
