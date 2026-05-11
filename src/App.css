@@ -122,6 +122,12 @@
   box-sizing: border-box;
 }
 
+.image-container {
+  position: relative;
+  width: 100%;
+  display: inline-block;
+}
+
 .day-image {
   width: 100%;
   max-width: none;
@@ -130,6 +136,29 @@
   margin: 0 auto;
   object-fit: cover;
   border-radius: 4px;
+}
+
+.image-nav-btn {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 50%;
+  transform: translateY(50%);
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f1c1d;
+  transition: background 0.2s;
+}
+
+.image-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .card-title {

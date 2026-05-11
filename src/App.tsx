@@ -6,12 +6,12 @@ type TripDay = {
   location: {
     name: string
     imageLabel: string
-    imageSrc?: string
+    imageSrcs?: string[]
   }
   accommodations: {
     name: string
     imageLabel: string
-    imageSrc?: string
+    imageSrcs?: string[]
   }
   itinerary: string[]
   resources: {
@@ -24,6 +24,29 @@ type TripDay = {
 const tripStartDate = new Date(2026, 5, 28)
 const tripLength = 9
 const publicAsset = (fileName: string) => `${import.meta.env.BASE_URL}${fileName}`
+
+const getLocationImages = (dayNumber: number): string[] => {
+  const dayLabel = dayNumber + 1
+  const baseUrl = publicAsset(`locations/day${dayLabel}/`)
+  return [
+    `${baseUrl}day${dayLabel}-location.png`,
+    `${baseUrl}image.png`,
+    `${baseUrl}image copy.png`,
+    `${baseUrl}image copy 2.png`,
+    `${baseUrl}image copy 3.png`,
+  ].filter(img => img)
+}
+
+const getAccommodationImages = (dayNumber: number): string[] => {
+  const accommodationMap: Record<number, number> = { 0: 0, 1: 1, 2: 1, 3: 1, 4: 1, 5: 5, 6: 5, 7: 7, 8: 7 }
+  const accomDay = accommodationMap[dayNumber] + 1
+  const baseUrl = publicAsset(`accommodations/day${accomDay}/`)
+  return [
+    `${baseUrl}day${accomDay}-accomodation.png`,
+    `${baseUrl}image.png`,
+    `${baseUrl}image copy.png`,
+  ].filter(img => img)
+}
 
 const tripDays: TripDay[] = Array.from({ length: tripLength }, (_, index) => {
   const currentDate = new Date(tripStartDate)
@@ -187,12 +210,12 @@ tripDays[1] = {
   location: {
     name: 'Downtown Banff (Banff Ave & Mountain View)',
     imageLabel: 'Banff town and mountain view',
-    imageSrc: publicAsset('day2-location.png'),
+    imageSrcs: getLocationImages(1),
   },
   accommodations: {
     name: 'Canmore Lodging',
     imageLabel: 'Accommodation exterior',
-    imageSrc: publicAsset('day2-accomodation.png'),
+    imageSrcs: getAccommodationImages(1),
   },
   itinerary: [
     'RentCar -> H-mart Shopping ( w/brunch)',
@@ -208,7 +231,7 @@ tripDays[1] = {
 tripDays[2].location = {
   ...tripDays[2].location,
   imageLabel: 'Day 3 location view',
-  imageSrc: publicAsset('day3-location.png'),
+  imageSrcs: getLocationImages(2),
 }
 
 tripDays[2].itinerary = [
@@ -222,7 +245,7 @@ tripDays[2].itinerary = [
 tripDays[3].location = {
   ...tripDays[3].location,
   imageLabel: 'Day 4 location view',
-  imageSrc: publicAsset('day4-location.png'),
+  imageSrcs: getLocationImages(3),
 }
 
 tripDays[3].itinerary = [
@@ -236,7 +259,7 @@ tripDays[3].itinerary = [
 tripDays[4].location = {
   ...tripDays[4].location,
   imageLabel: 'Day 5 location view',
-  imageSrc: publicAsset('day5-location.png'),
+  imageSrcs: getLocationImages(4),
 }
 
 tripDays[4].itinerary = [
@@ -249,7 +272,7 @@ tripDays[4].itinerary = [
 tripDays[5].location = {
   ...tripDays[5].location,
   imageLabel: 'Day 6 location view',
-  imageSrc: publicAsset('day6-location.png'),
+  imageSrcs: getLocationImages(5),
 }
 
 tripDays[5].itinerary = [
@@ -264,7 +287,7 @@ tripDays[5].itinerary = [
 tripDays[6].location = {
   ...tripDays[6].location,
   imageLabel: 'Day 7 location view',
-  imageSrc: publicAsset('day7-location.png'),
+  imageSrcs: getLocationImages(6),
 }
 
 tripDays[6].itinerary = [
@@ -279,7 +302,7 @@ tripDays[6].itinerary = [
 tripDays[7].location = { 
   ...tripDays[7].location,
   imageLabel: 'Day 8 location view',
-  imageSrc: publicAsset('day8-location.png'),
+  imageSrcs: getLocationImages(7),
 }
 
 tripDays[7].itinerary = [
@@ -294,7 +317,7 @@ tripDays[7].itinerary = [
 tripDays[8].location = {
   ...tripDays[8].location,
   imageLabel: 'Day 9 location view',
-  imageSrc: publicAsset('day9-location.png'),
+  imageSrcs: getLocationImages(8),
 }
 
 tripDays[8].itinerary = [
@@ -310,7 +333,7 @@ for (let dayIndex = 1; dayIndex <= 4; dayIndex += 1) {
     ...tripDays[dayIndex].accommodations,
     name: 'Canmore Mountain Lodge',
     imageLabel: 'Accommodation used for Days 2 through 5',
-    imageSrc: publicAsset('day2-accomodation.png'),
+    imageSrcs: getAccommodationImages(dayIndex),
   }
 }
 
@@ -319,7 +342,7 @@ for (let dayIndex = 5; dayIndex <= 6; dayIndex += 1) {
     ...tripDays[dayIndex].accommodations,
     name: 'Lake Louise Lodge',
     imageLabel: 'Accommodation used for Days 6 and 7',
-    imageSrc: publicAsset('day6-accomodation.png'),
+    imageSrcs: getAccommodationImages(dayIndex),
   }
 }
 
@@ -328,13 +351,37 @@ for (let dayIndex = 7; dayIndex <= 8; dayIndex += 1) {
     ...tripDays[dayIndex].accommodations,
     name: 'Calgary Downtown Hotel',
     imageLabel: 'Accommodation used for Days 8 and 9',
-    imageSrc: publicAsset('day8-accomodation.png'),
+    imageSrcs: getAccommodationImages(dayIndex),
   }
 }
 
 function App() {
   const [selectedIndex, setSelectedIndex] = useState(1)
   const [visibleStart, setVisibleStart] = useState(0)
+  const [locationImageIndices, setLocationImageIndices] = useState<Record<number, number>>({})
+  const [accommodationImageIndices, setAccommodationImageIndices] = useState<Record<number, number>>({})
+
+  const cycleLocationImage = (dayIdx: number) => {
+    const currentIdx = locationImageIndices[dayIdx] || 0
+    const imageCount = tripDays[dayIdx].location.imageSrcs?.length || 0
+    if (imageCount > 1) {
+      setLocationImageIndices(prev => ({
+        ...prev,
+        [dayIdx]: (currentIdx + 1) % imageCount,
+      }))
+    }
+  }
+
+  const cycleAccommodationImage = (dayIdx: number) => {
+    const currentIdx = accommodationImageIndices[dayIdx] || 0
+    const imageCount = tripDays[dayIdx].accommodations.imageSrcs?.length || 0
+    if (imageCount > 1) {
+      setAccommodationImageIndices(prev => ({
+        ...prev,
+        [dayIdx]: (currentIdx + 1) % imageCount,
+      }))
+    }
+  }
 
   const visibleWindowSize = 5
   const maxStart = Math.max(0, tripDays.length - visibleWindowSize)
@@ -421,12 +468,24 @@ function App() {
         <section className="content-section">
           <h2>Location 📍</h2>
           <article className="card">
-            {selectedDay.location.imageSrc ? (
-              <img
-                src={selectedDay.location.imageSrc}
-                alt={selectedDay.location.imageLabel}
-                className="day-image"
-              />
+            {selectedDay.location.imageSrcs && selectedDay.location.imageSrcs.length > 0 ? (
+              <div className="image-container">
+                <img
+                  src={selectedDay.location.imageSrcs[locationImageIndices[selectedIndex] || 0]}
+                  alt={selectedDay.location.imageLabel}
+                  className="day-image"
+                />
+                {selectedDay.location.imageSrcs.length > 1 && (
+                  <button
+                    type="button"
+                    className="image-nav-btn"
+                    onClick={() => cycleLocationImage(selectedIndex)}
+                    aria-label="Next location image"
+                  >
+                    ▶
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="image-placeholder">{selectedDay.location.imageLabel}</div>
             )}
@@ -437,12 +496,24 @@ function App() {
         <section className="content-section">
           <h2>Accommodations 🏨</h2>
           <article className="card">
-            {selectedDay.accommodations.imageSrc ? (
-              <img
-                src={selectedDay.accommodations.imageSrc}
-                alt={selectedDay.accommodations.imageLabel}
-                className="day-image"
-              />
+            {selectedDay.accommodations.imageSrcs && selectedDay.accommodations.imageSrcs.length > 0 ? (
+              <div className="image-container">
+                <img
+                  src={selectedDay.accommodations.imageSrcs[accommodationImageIndices[selectedIndex] || 0]}
+                  alt={selectedDay.accommodations.imageLabel}
+                  className="day-image"
+                />
+                {selectedDay.accommodations.imageSrcs.length > 1 && (
+                  <button
+                    type="button"
+                    className="image-nav-btn"
+                    onClick={() => cycleAccommodationImage(selectedIndex)}
+                    aria-label="Next accommodation image"
+                  >
+                    ▶
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="image-placeholder">{selectedDay.accommodations.imageLabel}</div>
             )}
