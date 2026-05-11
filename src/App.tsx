@@ -22,30 +22,75 @@ type TripDay = {
 }
 
 const tripStartDate = new Date(2026, 5, 28)
-const tripLength = 9
-const publicAsset = (fileName: string) => `${import.meta.env.BASE_URL}${fileName}`
+const tripLength = 10
 
-const getLocationImages = (dayNumber: number): string[] => {
-  const dayLabel = dayNumber + 1
-  const baseUrl = publicAsset(`locations/day${dayLabel}/`)
-  return [
-    `${baseUrl}day${dayLabel}-location.png`,
-    `${baseUrl}image.png`,
-    `${baseUrl}image copy.png`,
-    `${baseUrl}image copy 2.png`,
-    `${baseUrl}image copy 3.png`,
-  ].filter(img => img)
+const locationImageModules = import.meta.glob('../public/locations/day*/*.{png,jpg,jpeg,webp,avif,gif}', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+}) as Record<string, string>
+
+const accommodationImageModules = import.meta.glob('../public/accommodations/day*/*.{png,jpg,jpeg,webp,avif,gif}', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+}) as Record<string, string>
+
+const sortGalleryFiles = (fileA: string, fileB: string, featuredPrefix: string) => {
+  const aIsFeatured = fileA.startsWith(featuredPrefix)
+  const bIsFeatured = fileB.startsWith(featuredPrefix)
+
+  if (aIsFeatured && !bIsFeatured) {
+    return -1
+  }
+
+  if (!aIsFeatured && bIsFeatured) {
+    return 1
+  }
+
+  return fileA.localeCompare(fileB, undefined, { numeric: true })
 }
 
+const buildImageMap = (modules: Record<string, string>, featuredSuffix: 'location' | 'accomodation') => {
+  const imageMap: Record<number, { fileName: string; imageUrl: string }[]> = {}
+
+  Object.entries(modules).forEach(([modulePath, imageUrl]) => {
+    const match = modulePath.match(/day(\d+)\/([^/]+)$/)
+
+    if (!match) {
+      return
+    }
+
+    const dayIndex = Number(match[1]) - 1
+    const fileName = match[2]
+
+    if (!imageMap[dayIndex]) {
+      imageMap[dayIndex] = []
+    }
+
+    imageMap[dayIndex].push({ fileName, imageUrl })
+  })
+
+  return Object.fromEntries(
+    Object.entries(imageMap).map(([dayIndex, entries]) => {
+      const featuredPrefix = `day${Number(dayIndex) + 1}-${featuredSuffix}`
+      const sortedEntries = [...entries].sort((entryA, entryB) =>
+        sortGalleryFiles(entryA.fileName, entryB.fileName, featuredPrefix),
+      )
+
+      return [Number(dayIndex), sortedEntries.map((entry) => entry.imageUrl)]
+    }),
+  ) as Record<number, string[]>
+}
+
+const locationImagesByDay = buildImageMap(locationImageModules, 'location')
+const accommodationImagesByDay = buildImageMap(accommodationImageModules, 'accomodation')
+
+const getLocationImages = (dayNumber: number): string[] => locationImagesByDay[dayNumber] ?? []
+
 const getAccommodationImages = (dayNumber: number): string[] => {
-  const accommodationMap: Record<number, number> = { 0: 0, 1: 1, 2: 1, 3: 1, 4: 1, 5: 5, 6: 5, 7: 7, 8: 7 }
-  const accomDay = accommodationMap[dayNumber] + 1
-  const baseUrl = publicAsset(`accommodations/day${accomDay}/`)
-  return [
-    `${baseUrl}day${accomDay}-accomodation.png`,
-    `${baseUrl}image.png`,
-    `${baseUrl}image copy.png`,
-  ].filter(img => img)
+  const accommodationMap: Record<number, number> = { 0: 0, 1: 1, 2: 1, 3: 1, 4: 1, 5: 5, 6: 5, 7: 7, 8: 7, 9: 9 }
+  return accommodationImagesByDay[accommodationMap[dayNumber]] ?? []
 }
 
 const tripDays: TripDay[] = Array.from({ length: tripLength }, (_, index) => {
@@ -85,7 +130,7 @@ const tripDays: TripDay[] = Array.from({ length: tripLength }, (_, index) => {
 })
 
 const customLocationNames = [
-  'Banff Arrival & Town Stroll',
+  'Calgary International Airport',
   'Downtown Banff (Banff Ave & Mountain View)',
   'Bow Falls & Banff Springs Area',
   'Lake Minnewanka Scenic Drive',
@@ -94,6 +139,7 @@ const customLocationNames = [
   'Lake Louise Lakeshore',
   'Icefields Parkway Stops',
   'Calgary City Highlights',
+  'Return to Chicago',
 ]
 
 const customResourcesByDay = [
@@ -187,6 +233,16 @@ const customResourcesByDay = [
       url: 'https://www.calgarytransit.com',
     },
   ],
+  [
+    {
+      title: 'Calgary Pearson International Airport',
+      url: 'https://www.yyc.com',
+    },
+    {
+      title: 'Flight information',
+      url: 'https://www.yyc.com/en-US/Passengers.html',
+    },
+  ],
 ]
 
 customLocationNames.forEach((locationName, index) => {
@@ -200,9 +256,21 @@ customResourcesByDay.forEach((resources, index) => {
   tripDays[index].resources = resources
 })
 
-tripDays[0].accommodations = {
-  ...tripDays[0].accommodations,
-  name: 'Banff Hotel (Night 1)',
+tripDays[0] = {
+  ...tripDays[0],
+  location: {
+    name: 'Calgary International Airport',
+    imageLabel: 'Calgary Airport exterior',
+    imageSrcs: getLocationImages(0),
+  },
+  accommodations: {
+    name: 'Delta Hotels by Marriott Calgary Airport In-Terminal',
+    imageLabel: 'Calgary Airport hotel exterior',
+    imageSrcs: getAccommodationImages(0),
+  },
+  itinerary: [
+    'ORD -> YYC AA 1632 ( 8:50PM~11:43PM ) ✈️',
+  ],
 }
 
 tripDays[1] = {
@@ -328,6 +396,26 @@ tripDays[8].itinerary = [
     'Festival food truck ( lunch/snack/dinner ) 🌭🍔🍟',
 ]
 
+tripDays[9] = {
+  ...tripDays[9],
+  location: {
+    name: 'Return to Chicago',
+    imageLabel: 'Calgary Airport departure',
+    imageSrcs: getLocationImages(9),
+  },
+  accommodations: {
+    name: '✈️',
+    imageLabel: 'Calgary Downtown Hotel',
+    imageSrcs: getAccommodationImages(9),
+  },
+  itinerary: [
+    'Calgary Brunch 🥞',
+    'Rental Car Return (12:00PM) 🚗',
+    'YYC -> ORD AA 2389 ( 1:53PM~6:38PM ) ✈️',
+  ],
+  photosNote: 'Safe travels!',
+}
+
 for (let dayIndex = 1; dayIndex <= 4; dayIndex += 1) {
   tripDays[dayIndex].accommodations = {
     ...tripDays[dayIndex].accommodations,
@@ -356,7 +444,7 @@ for (let dayIndex = 7; dayIndex <= 8; dayIndex += 1) {
 }
 
 function App() {
-  const [selectedIndex, setSelectedIndex] = useState(1)
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const [visibleStart, setVisibleStart] = useState(0)
   const [locationImageIndices, setLocationImageIndices] = useState<Record<number, number>>({})
   const [accommodationImageIndices, setAccommodationImageIndices] = useState<Record<number, number>>({})
