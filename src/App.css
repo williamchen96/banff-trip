@@ -36,35 +36,28 @@
 }
 
 .date-nav {
-  display: grid;
-  grid-template-columns: 18px 1fr 18px;
-  align-items: center;
-  column-gap: 0.4rem;
   margin-bottom: 1.25rem;
-}
-
-.arrow-btn {
-  border: none;
-  background: transparent;
-  color: #252525;
-  cursor: pointer;
-  font-size: 0.95rem;
-  padding: 0;
-}
-
-.arrow-btn:disabled {
-  opacity: 0.32;
-  cursor: default;
+  overflow: hidden;
 }
 
 .date-chips {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
   gap: 0.4rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.25rem;
+  scrollbar-width: none;
+}
+
+.date-chips::-webkit-scrollbar {
+  display: none;
 }
 
 .date-chip {
-  width: 100%;
+  flex: 0 0 auto;
+  width: 60px;
+  scroll-snap-align: start;
   border-radius: 999px;
   border: 1px solid rgba(0, 0, 0, 0.15);
   background: #f3f3f3;
@@ -123,55 +116,58 @@
   box-sizing: border-box;
 }
 
-.image-container {
-  position: relative;
+.gallery-wrap {
   width: 100%;
+}
+
+.gallery-scroll {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 190px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   border-radius: 4px;
-  overflow: hidden;
-  background: #d9d9dd;
+  min-height: 190px;
+  background: #000;
+}
+
+.gallery-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .day-image {
+  flex: 0 0 100%;
   width: 100%;
-  max-width: none;
   height: auto;
   display: block;
-  margin: 0 auto;
   object-fit: contain;
+  scroll-snap-align: start;
   border-radius: 4px;
 }
 
-.image-nav-btn {
-  position: absolute;
-  right: 0.5rem;
-  bottom: 50%;
-  transform: translateY(50%);
-  background: rgba(255, 255, 255, 0.8);
-  border: none;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.2rem;
+.gallery-dots {
   display: flex;
-  align-items: center;
   justify-content: center;
-  color: #1f1c1d;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.gallery-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.22);
   transition: background 0.2s;
 }
 
-.image-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.95);
+.gallery-dot.active {
+  background: rgba(0, 0, 0, 0.7);
 }
 
 .card-title {
   text-align: center;
   margin: 0.55rem 0 0;
-  font-size: 1.5rem;
+  font-size: 1rem;
   line-height: 1.05;
   font-weight: 500;
 }

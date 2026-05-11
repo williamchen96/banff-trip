@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import './App.css'
 
 type TripDay = {
@@ -24,13 +24,13 @@ type TripDay = {
 const tripStartDate = new Date(2026, 5, 28)
 const tripLength = 10
 
-const locationImageModules = import.meta.glob('../public/locations/day*/*.{png,jpg,jpeg,webp,avif,gif}', {
+const locationImageModules = import.meta.glob('./assets/locations/day*/*.{png,jpg,jpeg,webp,avif,gif}', {
   eager: true,
   import: 'default',
   query: '?url',
 }) as Record<string, string>
 
-const accommodationImageModules = import.meta.glob('../public/accommodations/day*/*.{png,jpg,jpeg,webp,avif,gif}', {
+const accommodationImageModules = import.meta.glob('./assets/accommodations/day*/*.{png,jpg,jpeg,webp,avif,gif}', {
   eager: true,
   import: 'default',
   query: '?url',
@@ -445,59 +445,23 @@ for (let dayIndex = 7; dayIndex <= 8; dayIndex += 1) {
 
 function App() {
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [visibleStart, setVisibleStart] = useState(0)
   const [locationImageIndices, setLocationImageIndices] = useState<Record<number, number>>({})
   const [accommodationImageIndices, setAccommodationImageIndices] = useState<Record<number, number>>({})
 
-  const cycleLocationImage = (dayIdx: number) => {
-    const currentIdx = locationImageIndices[dayIdx] || 0
-    const imageCount = tripDays[dayIdx].location.imageSrcs?.length || 0
-    if (imageCount > 1) {
-      setLocationImageIndices(prev => ({
-        ...prev,
-        [dayIdx]: (currentIdx + 1) % imageCount,
-      }))
-    }
-  }
-
-  const cycleAccommodationImage = (dayIdx: number) => {
-    const currentIdx = accommodationImageIndices[dayIdx] || 0
-    const imageCount = tripDays[dayIdx].accommodations.imageSrcs?.length || 0
-    if (imageCount > 1) {
-      setAccommodationImageIndices(prev => ({
-        ...prev,
-        [dayIdx]: (currentIdx + 1) % imageCount,
-      }))
-    }
-  }
-
-  const visibleWindowSize = 5
-  const maxStart = Math.max(0, tripDays.length - visibleWindowSize)
-
-  const adjustVisibleWindow = (nextIndex: number) => {
-    setVisibleStart((previous) => {
-      if (nextIndex < previous) {
-        return nextIndex
-      }
-
-      if (nextIndex >= previous + visibleWindowSize) {
-        return Math.min(maxStart, nextIndex - visibleWindowSize + 1)
-      }
-
-      return previous
-    })
+  const onGalleryScroll = (
+    e: React.UIEvent<HTMLDivElement>,
+    setter: React.Dispatch<React.SetStateAction<Record<number, number>>>,
+    dayIdx: number,
+  ) => {
+    const el = e.currentTarget
+    const index = Math.round(el.scrollLeft / el.clientWidth)
+    setter(prev => ({ ...prev, [dayIdx]: index }))
   }
 
   const selectDate = (index: number) => {
     const boundedIndex = Math.max(0, Math.min(tripDays.length - 1, index))
     setSelectedIndex(boundedIndex)
-    adjustVisibleWindow(boundedIndex)
   }
-
-  const visibleDates = useMemo(
-    () => tripDays.slice(visibleStart, visibleStart + visibleWindowSize),
-    [visibleStart, visibleWindowSize],
-  )
 
   const selectedDay = tripDays[selectedIndex]
 
@@ -512,28 +476,17 @@ function App() {
         </header>
 
         <nav className="date-nav" aria-label="Trip dates">
-          <button
-            type="button"
-            className="arrow-btn"
-            onClick={() => selectDate(selectedIndex - 1)}
-            disabled={selectedIndex === 0}
-            aria-label="Previous date"
-          >
-            ◀
-          </button>
-
           <div className="date-chips" role="list">
-            {visibleDates.map((tripDay, localIndex) => {
-              const absoluteIndex = visibleStart + localIndex
+            {tripDays.map((tripDay, index) => {
               const [month, day] = tripDay.dateLabel.split(' ')
 
               return (
                 <button
                   key={tripDay.dateLabel}
                   type="button"
-                  className={`date-chip ${absoluteIndex === selectedIndex ? 'active' : ''}`}
-                  onClick={() => selectDate(absoluteIndex)}
-                  aria-current={absoluteIndex === selectedIndex ? 'date' : undefined}
+                  className={`date-chip ${index === selectedIndex ? 'active' : ''}`}
+                  onClick={() => selectDate(index)}
+                  aria-current={index === selectedIndex ? 'date' : undefined}
                 >
                   <span>{month}</span>
                   <strong>{day}</strong>
@@ -541,37 +494,30 @@ function App() {
               )
             })}
           </div>
-
-          <button
-            type="button"
-            className="arrow-btn"
-            onClick={() => selectDate(selectedIndex + 1)}
-            disabled={selectedIndex === tripDays.length - 1}
-            aria-label="Next date"
-          >
-            ▶
-          </button>
         </nav>
 
         <section className="content-section">
           <h2>Location 📍</h2>
           <article className="card">
             {selectedDay.location.imageSrcs && selectedDay.location.imageSrcs.length > 0 ? (
-              <div className="image-container">
-                <img
-                  src={selectedDay.location.imageSrcs[locationImageIndices[selectedIndex] || 0]}
-                  alt={selectedDay.location.imageLabel}
-                  className="day-image"
-                />
+              <div className="gallery-wrap">
+                <div
+                  className="gallery-scroll"
+                  onScroll={e => onGalleryScroll(e, setLocationImageIndices, selectedIndex)}
+                >
+                  {selectedDay.location.imageSrcs.map((src, i) => (
+                    <img key={src} src={src} alt={`${selectedDay.location.imageLabel} ${i + 1}`} className="day-image" />
+                  ))}
+                </div>
                 {selectedDay.location.imageSrcs.length > 1 && (
-                  <button
-                    type="button"
-                    className="image-nav-btn"
-                    onClick={() => cycleLocationImage(selectedIndex)}
-                    aria-label="Next location image"
-                  >
-                    ▶
-                  </button>
+                  <div className="gallery-dots">
+                    {selectedDay.location.imageSrcs.map((_, i) => (
+                      <span
+                        key={i}
+                        className={`gallery-dot${i === (locationImageIndices[selectedIndex] || 0) ? ' active' : ''}`}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             ) : (
@@ -585,21 +531,24 @@ function App() {
           <h2>Accommodations 🏨</h2>
           <article className="card">
             {selectedDay.accommodations.imageSrcs && selectedDay.accommodations.imageSrcs.length > 0 ? (
-              <div className="image-container">
-                <img
-                  src={selectedDay.accommodations.imageSrcs[accommodationImageIndices[selectedIndex] || 0]}
-                  alt={selectedDay.accommodations.imageLabel}
-                  className="day-image"
-                />
+              <div className="gallery-wrap">
+                <div
+                  className="gallery-scroll"
+                  onScroll={e => onGalleryScroll(e, setAccommodationImageIndices, selectedIndex)}
+                >
+                  {selectedDay.accommodations.imageSrcs.map((src, i) => (
+                    <img key={src} src={src} alt={`${selectedDay.accommodations.imageLabel} ${i + 1}`} className="day-image" />
+                  ))}
+                </div>
                 {selectedDay.accommodations.imageSrcs.length > 1 && (
-                  <button
-                    type="button"
-                    className="image-nav-btn"
-                    onClick={() => cycleAccommodationImage(selectedIndex)}
-                    aria-label="Next accommodation image"
-                  >
-                    ▶
-                  </button>
+                  <div className="gallery-dots">
+                    {selectedDay.accommodations.imageSrcs.map((_, i) => (
+                      <span
+                        key={i}
+                        className={`gallery-dot${i === (accommodationImageIndices[selectedIndex] || 0) ? ' active' : ''}`}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             ) : (
