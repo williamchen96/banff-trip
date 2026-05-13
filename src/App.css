@@ -102,6 +102,102 @@
   box-shadow: 0 10px 24px rgba(31, 28, 29, 0.12);
 }
 
+.weather-card {
+  text-align: center;
+  padding: 0.75rem 0.6rem;
+}
+
+.weather-city {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #1f1c1d;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.weather-source {
+  margin: 0.25rem 0 0;
+  font-size: 0.84rem;
+  color: #555;
+  font-weight: 600;
+}
+
+.weather-condition {
+  margin: 0.45rem 0 0;
+  font-size: 1.06rem;
+  font-weight: 600;
+}
+
+.weather-temps,
+.weather-rain,
+.weather-unavailable {
+  margin: 0.38rem 0 0;
+  font-size: 0.94rem;
+  color: #2a2a2a;
+}
+
+.weather-outlook {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.weather-outlook-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.weather-outlook-list {
+  list-style: none;
+  margin: 0.45rem 0 0;
+  padding: 0;
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.weather-outlook-list::-webkit-scrollbar {
+  display: none;
+}
+
+.weather-outlook-item {
+  flex: 0 0 auto;
+  min-width: 74px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0.35rem 0.4rem;
+}
+
+.weather-outlook-day {
+  font-weight: 700;
+  text-align: center;
+}
+
+.weather-outlook-condition {
+  text-align: center;
+  color: #2a2a2a;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.weather-outlook-temps {
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.74rem;
+}
+
 .image-placeholder {
   width: 100%;
   max-width: none;
@@ -162,6 +258,14 @@
 
 .gallery-dot.active {
   background: rgba(0, 0, 0, 0.7);
+}
+
+.image-caption {
+  margin: 0.45rem 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  color: #2a2a2a;
 }
 
 .card-title {

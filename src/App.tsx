@@ -1,5 +1,10 @@
-import { useState } from 'react'
 import './App.css'
+import { DateChips } from './components/DateChips'
+import { ImageGallery } from './components/ImageGallery'
+import { WeatherCard } from './components/WeatherCard'
+import { useTripPlannerState } from './hooks/useTripPlannerState'
+import { useWeatherByDay } from './hooks/useWeatherByDay'
+import { dayWeatherCity } from './services/weatherService'
 
 type TripDay = {
   dateLabel: string
@@ -444,26 +449,20 @@ for (let dayIndex = 7; dayIndex <= 8; dayIndex += 1) {
 }
 
 function App() {
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [locationImageIndices, setLocationImageIndices] = useState<Record<number, number>>({})
-  const [accommodationImageIndices, setAccommodationImageIndices] = useState<Record<number, number>>({})
-
-  const onGalleryScroll = (
-    e: React.UIEvent<HTMLDivElement>,
-    setter: React.Dispatch<React.SetStateAction<Record<number, number>>>,
-    dayIdx: number,
-  ) => {
-    const el = e.currentTarget
-    const index = Math.round(el.scrollLeft / el.clientWidth)
-    setter(prev => ({ ...prev, [dayIdx]: index }))
-  }
-
-  const selectDate = (index: number) => {
-    const boundedIndex = Math.max(0, Math.min(tripDays.length - 1, index))
-    setSelectedIndex(boundedIndex)
-  }
+  const {
+    selectedIndex,
+    locationImageIndices,
+    setLocationImageIndices,
+    accommodationImageIndices,
+    setAccommodationImageIndices,
+    selectDate,
+    onGalleryScroll,
+  } = useTripPlannerState(tripDays.length)
+  const { weatherByDay, weatherLoaded } = useWeatherByDay(tripDays.length)
 
   const selectedDay = tripDays[selectedIndex]
+  const selectedWeather = weatherByDay[selectedIndex]
+  const selectedWeatherCity = dayWeatherCity[selectedIndex] ?? dayWeatherCity[dayWeatherCity.length - 1]
 
   return (
     <main className="app-shell">
@@ -475,51 +474,26 @@ function App() {
           </p>
         </header>
 
-        <nav className="date-nav" aria-label="Trip dates">
-          <div className="date-chips" role="list">
-            {tripDays.map((tripDay, index) => {
-              const [month, day] = tripDay.dateLabel.split(' ')
+        <DateChips tripDays={tripDays} selectedIndex={selectedIndex} onSelectDate={selectDate} />
 
-              return (
-                <button
-                  key={tripDay.dateLabel}
-                  type="button"
-                  className={`date-chip ${index === selectedIndex ? 'active' : ''}`}
-                  onClick={() => selectDate(index)}
-                  aria-current={index === selectedIndex ? 'date' : undefined}
-                >
-                  <span>{month}</span>
-                  <strong>{day}</strong>
-                </button>
-              )
-            })}
-          </div>
-        </nav>
+        <WeatherCard
+          selectedWeather={selectedWeather}
+          selectedWeatherCity={selectedWeatherCity}
+          weatherLoaded={weatherLoaded}
+        />
 
         <section className="content-section">
           <h2>Location 📍</h2>
           <article className="card">
             {selectedDay.location.imageSrcs && selectedDay.location.imageSrcs.length > 0 ? (
-              <div className="gallery-wrap">
-                <div
-                  className="gallery-scroll"
-                  onScroll={e => onGalleryScroll(e, setLocationImageIndices, selectedIndex)}
-                >
-                  {selectedDay.location.imageSrcs.map((src, i) => (
-                    <img key={src} src={src} alt={`${selectedDay.location.imageLabel} ${i + 1}`} className="day-image" />
-                  ))}
-                </div>
-                {selectedDay.location.imageSrcs.length > 1 && (
-                  <div className="gallery-dots">
-                    {selectedDay.location.imageSrcs.map((_, i) => (
-                      <span
-                        key={i}
-                        className={`gallery-dot${i === (locationImageIndices[selectedIndex] || 0) ? ' active' : ''}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ImageGallery
+                images={selectedDay.location.imageSrcs}
+                imageLabel={selectedDay.location.imageLabel}
+                dayIndex={selectedIndex}
+                activeIndex={locationImageIndices[selectedIndex] || 0}
+                galleryKey={`location-gallery-${selectedIndex}`}
+                onScroll={(e) => onGalleryScroll(e, setLocationImageIndices, selectedIndex)}
+              />
             ) : (
               <div className="image-placeholder">{selectedDay.location.imageLabel}</div>
             )}
@@ -531,26 +505,14 @@ function App() {
           <h2>Accommodations 🏨</h2>
           <article className="card">
             {selectedDay.accommodations.imageSrcs && selectedDay.accommodations.imageSrcs.length > 0 ? (
-              <div className="gallery-wrap">
-                <div
-                  className="gallery-scroll"
-                  onScroll={e => onGalleryScroll(e, setAccommodationImageIndices, selectedIndex)}
-                >
-                  {selectedDay.accommodations.imageSrcs.map((src, i) => (
-                    <img key={src} src={src} alt={`${selectedDay.accommodations.imageLabel} ${i + 1}`} className="day-image" />
-                  ))}
-                </div>
-                {selectedDay.accommodations.imageSrcs.length > 1 && (
-                  <div className="gallery-dots">
-                    {selectedDay.accommodations.imageSrcs.map((_, i) => (
-                      <span
-                        key={i}
-                        className={`gallery-dot${i === (accommodationImageIndices[selectedIndex] || 0) ? ' active' : ''}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ImageGallery
+                images={selectedDay.accommodations.imageSrcs}
+                imageLabel={selectedDay.accommodations.imageLabel}
+                dayIndex={selectedIndex}
+                activeIndex={accommodationImageIndices[selectedIndex] || 0}
+                galleryKey={`accommodation-gallery-${selectedIndex}`}
+                onScroll={(e) => onGalleryScroll(e, setAccommodationImageIndices, selectedIndex)}
+              />
             ) : (
               <div className="image-placeholder">{selectedDay.accommodations.imageLabel}</div>
             )}
