@@ -14,12 +14,12 @@ export function WeatherCard({ selectedWeather, selectedWeatherCity, weatherLoade
 
   return (
     <section className="content-section">
-      <h2>Weather 🌦️</h2>
+      <h2>Current Weather 🌦️</h2>
       <article className="card weather-card">
         {selectedWeather && selectedCondition ? (
           <>
+            {/* <p className="weather-source">Today's weather</p> */}
             <p className="weather-city">{selectedWeather.city}</p>
-            <p className="weather-source">Today's weather</p>
             <p className="weather-condition">
               {selectedWeather.current}°F {selectedCondition.emoji}
             </p>

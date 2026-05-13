@@ -1,6 +1,7 @@
 import './App.css'
 import { DateChips } from './components/DateChips'
 import { ImageGallery } from './components/ImageGallery'
+import { TripCountdown } from './components/TripCountdown'
 import { WeatherCard } from './components/WeatherCard'
 import { useTripPlannerState } from './hooks/useTripPlannerState'
 import { useWeatherByDay } from './hooks/useWeatherByDay'
@@ -28,6 +29,32 @@ type TripDay = {
 
 const tripStartDate = new Date(2026, 5, 28)
 const tripLength = 10
+
+const locationMapQueries = [
+  'Calgary International Airport',
+  'Downtown Banff Avenue Banff AB',
+  'Bow Falls Banff Springs Hotel Banff AB',
+  'Lake Minnewanka Banff AB',
+  'Johnston Canyon Banff AB',
+  'Moraine Lake Banff AB',
+  'Lake Louise Lakeshore Banff AB',
+  'Icefields Parkway Alberta',
+  'Downtown Calgary AB',
+  'Calgary International Airport',
+]
+
+const getMapsUrl = (query: string) => {
+  if (typeof navigator !== 'undefined') {
+    const ua = navigator.userAgent || ''
+    const isAppleDevice = /iPhone|iPad|iPod|Macintosh/i.test(ua)
+
+    if (isAppleDevice) {
+      return `https://maps.apple.com/?q=${encodeURIComponent(query)}`
+    }
+  }
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+}
 
 const locationImageModules = import.meta.glob('./assets/locations/day*/*.{png,jpg,jpeg,webp,avif,gif}', {
   eager: true,
@@ -463,6 +490,11 @@ function App() {
   const selectedDay = tripDays[selectedIndex]
   const selectedWeather = weatherByDay[selectedIndex]
   const selectedWeatherCity = dayWeatherCity[selectedIndex] ?? dayWeatherCity[dayWeatherCity.length - 1]
+  const selectedLocationQuery = locationMapQueries[selectedIndex] ?? selectedDay.location.name
+
+  const openInMaps = () => {
+    window.open(getMapsUrl(selectedLocationQuery), '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <main className="app-shell">
@@ -472,6 +504,7 @@ function App() {
           <p className="emoji-line" aria-hidden="true">
             🇨🇦 🏔️
           </p>
+          <TripCountdown targetDate={tripStartDate} />
         </header>
 
         <DateChips tripDays={tripDays} selectedIndex={selectedIndex} onSelectDate={selectDate} />
@@ -498,6 +531,9 @@ function App() {
               <div className="image-placeholder">{selectedDay.location.imageLabel}</div>
             )}
             <p className="card-title">{selectedDay.location.name}</p>
+            <button type="button" className="map-link-btn" onClick={openInMaps}>
+              Open in Maps
+            </button>
           </article>
         </section>
 
