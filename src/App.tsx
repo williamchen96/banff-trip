@@ -1,31 +1,16 @@
+import { useRef, useState } from 'react'
 import './App.css'
 import { DateChips } from './components/DateChips'
 import { ImageGallery } from './components/ImageGallery'
+import { ItineraryModal } from './components/ItineraryModal'
+import { PhotoUpload, type PhotoUploadHandle } from './components/PhotoUpload'
 import { TripCountdown } from './components/TripCountdown'
 import { WeatherCard } from './components/WeatherCard'
+import { useCollaborativeTrip } from './hooks/useCollaborativeTrip'
 import { useTripPlannerState } from './hooks/useTripPlannerState'
 import { useWeatherByDay } from './hooks/useWeatherByDay'
 import { dayWeatherCity } from './services/weatherService'
-
-type TripDay = {
-  dateLabel: string
-  location: {
-    name: string
-    imageLabel: string
-    imageSrcs?: string[]
-  }
-  accommodations: {
-    name: string
-    imageLabel: string
-    imageSrcs?: string[]
-  }
-  itinerary: string[]
-  resources: {
-    title: string
-    url: string
-  }[]
-  photosNote: string
-}
+import type { TripDay } from './services/tripTypes'
 
 const tripStartDate = new Date(2026, 5, 28)
 const tripLength = 10
@@ -125,7 +110,7 @@ const getAccommodationImages = (dayNumber: number): string[] => {
   return accommodationImagesByDay[accommodationMap[dayNumber]] ?? []
 }
 
-const tripDays: TripDay[] = Array.from({ length: tripLength }, (_, index) => {
+const defaultTripDays: TripDay[] = Array.from({ length: tripLength }, (_, index) => {
   const currentDate = new Date(tripStartDate)
   currentDate.setDate(tripStartDate.getDate() + index)
 
@@ -278,18 +263,18 @@ const customResourcesByDay = [
 ]
 
 customLocationNames.forEach((locationName, index) => {
-  tripDays[index].location = {
-    ...tripDays[index].location,
+  defaultTripDays[index].location = {
+    ...defaultTripDays[index].location,
     name: locationName,
   }
 })
 
 customResourcesByDay.forEach((resources, index) => {
-  tripDays[index].resources = resources
+  defaultTripDays[index].resources = resources
 })
 
-tripDays[0] = {
-  ...tripDays[0],
+defaultTripDays[0] = {
+  ...defaultTripDays[0],
   location: {
     name: 'Calgary International Airport',
     imageLabel: 'Calgary Airport exterior',
@@ -305,8 +290,8 @@ tripDays[0] = {
   ],
 }
 
-tripDays[1] = {
-  ...tripDays[1],
+defaultTripDays[1] = {
+  ...defaultTripDays[1],
   location: {
     name: 'Downtown Banff (Banff Ave & Mountain View)',
     imageLabel: 'Banff town and mountain view',
@@ -328,13 +313,13 @@ tripDays[1] = {
   photosNote: 'Add favorite Day 2 street and mountain photos here.',
 }
 
-tripDays[2].location = {
-  ...tripDays[2].location,
+defaultTripDays[2].location = {
+  ...defaultTripDays[2].location,
   imageLabel: 'Day 3 location view',
   imageSrcs: getLocationImages(2),
 }
 
-tripDays[2].itinerary = [
+defaultTripDays[2].itinerary = [
   'Lake louise day ( 6:30 bus ) 🚌',
   'Hard hiking ( 6 hr , R9.5mile, E520m) 🏔️',
   'Plain of six->lake agnes->beehive hiking',
@@ -342,13 +327,13 @@ tripDays[2].itinerary = [
   'Birthday dinner ( Banff Restaurant )'
 ]
 
-tripDays[3].location = {
-  ...tripDays[3].location,
+defaultTripDays[3].location = {
+  ...defaultTripDays[3].location,
   imageLabel: 'Day 4 location view',
   imageSrcs: getLocationImages(3),
 }
 
-tripDays[3].itinerary = [
+defaultTripDays[3].itinerary = [
   'Golden skybridge/Emerald Kayak day 🚠🛶',
   'Easy day',
   'Golden Sky bridge ( Zipline, Railrider option)',
@@ -356,26 +341,26 @@ tripDays[3].itinerary = [
   'BBQ Dinner 🍖'
 ]
 
-tripDays[4].location = {
-  ...tripDays[4].location,
+defaultTripDays[4].location = {
+  ...defaultTripDays[4].location,
   imageLabel: 'Day 5 location view',
   imageSrcs: getLocationImages(4),
 }
 
-tripDays[4].itinerary = [
+defaultTripDays[4].itinerary = [
   'Lake Moraine Day (6:30 bus) 🚌',
   'Hard hiking ( 5.5 hr , R6.9mile, E725m) 🏔️',
   'Sentinal pass hiking',
   'Canmore dinner ( restaurant ) or BBQ'
 ]
 
-tripDays[5].location = {
-  ...tripDays[5].location,
+defaultTripDays[5].location = {
+  ...defaultTripDays[5].location,
   imageLabel: 'Day 6 location view',
   imageSrcs: getLocationImages(5),
 }
 
-tripDays[5].itinerary = [
+defaultTripDays[5].itinerary = [
     'Icefield parkway/Columbia ice field day 🚗',
     'Easy day',
     'Icefield parkway scenic drive (Unesco Heritage) 🚗',
@@ -384,13 +369,13 @@ tripDays[5].itinerary = [
     'BBQ Dinner 🍖'
 ]
 
-tripDays[6].location = {
-  ...tripDays[6].location,
+defaultTripDays[6].location = {
+  ...defaultTripDays[6].location,
   imageLabel: 'Day 7 location view',
   imageSrcs: getLocationImages(6),
 }
 
-tripDays[6].itinerary = [
+defaultTripDays[6].itinerary = [
   'Hot spring / spirit island(cruise) day ♨️🛳️',
   'Hard day',
   'Sulphur skyline hiking ( 4hr, R5 mile, E700m)',
@@ -399,13 +384,13 @@ tripDays[6].itinerary = [
   'BBQ Dinner 🍖'
 ]
 
-tripDays[7].location = { 
-  ...tripDays[7].location,
+defaultTripDays[7].location = {
+  ...defaultTripDays[7].location,
   imageLabel: 'Day 8 location view',
   imageSrcs: getLocationImages(7),
 }
 
-tripDays[7].itinerary = [
+defaultTripDays[7].itinerary = [
     'hinton->Jesper->banff->Calgery',
     'Easy day',
     'Pyramid Lake Trail & Pyramid island hiking 🏔',
@@ -414,13 +399,13 @@ tripDays[7].itinerary = [
     'Calgery Dinner ( Restaur, if late togo food)',
 ]   
 
-tripDays[8].location = {
-  ...tripDays[8].location,
+defaultTripDays[8].location = {
+  ...defaultTripDays[8].location,
   imageLabel: 'Day 9 location view',
   imageSrcs: getLocationImages(8),
 }
 
-tripDays[8].itinerary = [
+defaultTripDays[8].itinerary = [
     'Calgery Stampede Festival all day 🎉',
     'Easy Day',
     'Rodeo show  ( 1:30 PM ~ 3 :30 PM) 🐂',
@@ -428,8 +413,8 @@ tripDays[8].itinerary = [
     'Festival food truck ( lunch/snack/dinner ) 🌭🍔🍟',
 ]
 
-tripDays[9] = {
-  ...tripDays[9],
+defaultTripDays[9] = {
+  ...defaultTripDays[9],
   location: {
     name: 'Return to Chicago',
     imageLabel: 'Calgary Airport departure',
@@ -449,8 +434,8 @@ tripDays[9] = {
 }
 
 for (let dayIndex = 1; dayIndex <= 4; dayIndex += 1) {
-  tripDays[dayIndex].accommodations = {
-    ...tripDays[dayIndex].accommodations,
+  defaultTripDays[dayIndex].accommodations = {
+    ...defaultTripDays[dayIndex].accommodations,
     name: 'Canmore Mountain Lodge',
     imageLabel: 'Accommodation used for Days 2 through 5',
     imageSrcs: getAccommodationImages(dayIndex),
@@ -458,8 +443,8 @@ for (let dayIndex = 1; dayIndex <= 4; dayIndex += 1) {
 }
 
 for (let dayIndex = 5; dayIndex <= 6; dayIndex += 1) {
-  tripDays[dayIndex].accommodations = {
-    ...tripDays[dayIndex].accommodations,
+  defaultTripDays[dayIndex].accommodations = {
+    ...defaultTripDays[dayIndex].accommodations,
     name: 'Lake Louise Lodge',
     imageLabel: 'Accommodation used for Days 6 and 7',
     imageSrcs: getAccommodationImages(dayIndex),
@@ -467,8 +452,8 @@ for (let dayIndex = 5; dayIndex <= 6; dayIndex += 1) {
 }
 
 for (let dayIndex = 7; dayIndex <= 8; dayIndex += 1) {
-  tripDays[dayIndex].accommodations = {
-    ...tripDays[dayIndex].accommodations,
+  defaultTripDays[dayIndex].accommodations = {
+    ...defaultTripDays[dayIndex].accommodations,
     name: 'Calgary Downtown Hotel',
     imageLabel: 'Accommodation used for Days 8 and 9',
     imageSrcs: getAccommodationImages(dayIndex),
@@ -476,6 +461,17 @@ for (let dayIndex = 7; dayIndex <= 8; dayIndex += 1) {
 }
 
 function App() {
+  const photoUploadRef = useRef<PhotoUploadHandle>(null)
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false)
+
+  const {
+    tripDays,
+    saveTripDays,
+  } = useCollaborativeTrip({
+    tripId: 'banff-2026',
+    defaultTripDays,
+  })
+
   const {
     selectedIndex,
     locationImageIndices,
@@ -494,6 +490,11 @@ function App() {
 
   const openInMaps = () => {
     window.open(getMapsUrl(selectedLocationQuery), '_blank', 'noopener,noreferrer')
+  }
+
+  const saveSelectedDay = async (nextDay: TripDay) => {
+    const nextTripDays = tripDays.map((day, dayIndex) => (dayIndex === selectedIndex ? nextDay : day))
+    await saveTripDays(nextTripDays)
   }
 
   return (
@@ -557,7 +558,16 @@ function App() {
         </section>
 
         <section className="content-section">
-          <h2>Itinerary 📋</h2>
+          <div className="section-header">
+            <h2>Itinerary 📋</h2>
+            <ItineraryModal
+              itinerary={selectedDay.itinerary}
+              onSave={async (newItinerary) => {
+                const nextDay = { ...selectedDay, itinerary: newItinerary }
+                await saveSelectedDay(nextDay)
+              }}
+            />
+          </div>
           <article className="card text-card">
             <ul>
               {selectedDay.itinerary.map((item) => (
@@ -583,9 +593,29 @@ function App() {
         </section>
 
         <section className="content-section last-section">
-          <h2>Pictures 📷</h2>
-          <article className="card text-card">
-            <p>{selectedDay.photosNote}</p>
+          <div className="section-header">
+            <h2>Pictures 📷</h2>
+            <button
+              type="button"
+              className="itinerary-edit-btn"
+              onClick={() => photoUploadRef.current?.trigger()}
+              disabled={isPhotoUploading}
+            >
+              {isPhotoUploading ? 'Uploading...' : '📤 Upload'}
+            </button>
+          </div>
+          <article className="card photo-card">
+            <PhotoUpload
+              ref={photoUploadRef}
+              uploadedPhotos={selectedDay.uploadedPhotos ?? []}
+              dayIndex={selectedIndex}
+              tripId="banff-2026"
+              onPhotosChanged={async (newUrls) => {
+                const nextDay = { ...selectedDay, uploadedPhotos: newUrls }
+                await saveSelectedDay(nextDay)
+              }}
+              onUploadingChange={setIsPhotoUploading}
+            />
           </article>
         </section>
       </section>
