@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { DateChips } from './components/DateChips'
 import { ImageGallery } from './components/ImageGallery'
@@ -9,14 +9,16 @@ import { WeatherCard } from './components/WeatherCard'
 import { useCollaborativeTrip } from './hooks/useCollaborativeTrip'
 import { useTripPlannerState } from './hooks/useTripPlannerState'
 import { useWeatherByDay } from './hooks/useWeatherByDay'
+import { isSupabaseConfigured, supabase } from './services/supabaseClient'
 import { dayWeatherCity } from './services/weatherService'
 import type { TripDay } from './services/tripTypes'
 
 const tripStartDate = new Date(2026, 5, 28)
 const tripLength = 10
-const supabaseProjectUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const stockBucketName = 'trip-photos'
 const stockPrefix = 'stock'
+const imageExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.avif', '.gif'])
+const accommodationMap: Record<number, number> = { 0: 0, 1: 1, 2: 1, 3: 1, 4: 1, 5: 5, 6: 5, 7: 7, 8: 7, 9: 9 }
 
 const locationMapQueries = [
   'Calgary International Airport',
@@ -44,10 +46,6 @@ const getMapsUrl = (query: string) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
 
-const locationImageModules = import.meta.glob('./assets/locations/day*/*.{png,jpg,jpeg,webp,avif,gif}')
-
-const accommodationImageModules = import.meta.glob('./assets/accommodations/day*/*.{png,jpg,jpeg,webp,avif,gif}')
-
 const sortGalleryFiles = (fileA: string, fileB: string, featuredPrefix: string) => {
   const aIsFeatured = fileA.startsWith(featuredPrefix)
   const bIsFeatured = fileB.startsWith(featuredPrefix)
@@ -63,70 +61,83 @@ const sortGalleryFiles = (fileA: string, fileB: string, featuredPrefix: string) 
   return fileA.localeCompare(fileB, undefined, { numeric: true })
 }
 
-const toSupabasePublicUrl = (assetRelativePath: string) => {
+const toSupabasePublicUrl = (bucketPath: string) => {
+  const supabaseProjectUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+
   if (!supabaseProjectUrl) {
     return ''
   }
 
-  const encodedPath = assetRelativePath
+  const encodedPath = bucketPath
     .split('/')
     .map((segment) => encodeURIComponent(segment))
     .join('/')
 
-  return `${supabaseProjectUrl}/storage/v1/object/public/${stockBucketName}/${stockPrefix}/${encodedPath}`
+  return `${supabaseProjectUrl}/storage/v1/object/public/${stockBucketName}/${encodedPath}`
 }
 
-const buildImageMap = (
-  modules: Record<string, () => Promise<unknown>>,
-  featuredSuffix: 'location' | 'accomodation',
-  category: 'locations' | 'accommodations',
-) => {
+const listImagesForCategoryDay = async (category: 'locations' | 'accommodations', dayNumber: number) => {
+  if (!supabase) {
+    return [] as string[]
+  }
+
+  const folderPath = `${stockPrefix}/${category}/day${dayNumber}`
+  const { data, error } = await supabase.storage.from(stockBucketName).list(folderPath, {
+    limit: 200,
+    offset: 0,
+  })
+
+  if (error || !data) {
+    return [] as string[]
+  }
+
+  const featuredSuffix = category === 'locations' ? 'location' : 'accomodation'
+  const featuredPrefix = `day${dayNumber}-${featuredSuffix}`
+
+  const imageFileNames = data
+    .map((entry) => entry.name)
+    .filter((name) => {
+      const extIndex = name.lastIndexOf('.')
+      if (extIndex < 0) {
+        return false
+      }
+
+      return imageExtensions.has(name.slice(extIndex).toLowerCase())
+    })
+    .sort((fileA, fileB) => sortGalleryFiles(fileA, fileB, featuredPrefix))
+
+  return imageFileNames
+    .map((fileName) => toSupabasePublicUrl(`${folderPath}/${fileName}`))
+    .filter((url) => url.length > 0)
+}
+
+const buildImageMap = async (category: 'locations' | 'accommodations') => {
   const imageMap: Record<number, { fileName: string; imageUrl: string }[]> = {}
 
-  Object.keys(modules).forEach((modulePath) => {
-    const match = modulePath.match(/day(\d+)\/([^/]+)$/)
+  const dayFetches = Array.from({ length: tripLength }, async (_, dayIdx) => {
+    const dayNumber = dayIdx + 1
+    const imageUrls = await listImagesForCategoryDay(category, dayNumber)
+    return [dayIdx, imageUrls] as const
+  })
 
-    if (!match) {
-      return
-    }
+  const fetchedDays = await Promise.all(dayFetches)
 
-    const dayIndex = Number(match[1]) - 1
-    const fileName = match[2]
-
-    if (!imageMap[dayIndex]) {
-      imageMap[dayIndex] = []
-    }
-
-    const assetRelativePath = `${category}/day${dayIndex + 1}/${fileName}`
-    const imageUrl = toSupabasePublicUrl(assetRelativePath)
-
-    imageMap[dayIndex].push({ fileName, imageUrl })
+  fetchedDays.forEach(([dayIdx, imageUrls]) => {
+    imageMap[dayIdx] = imageUrls.map((imageUrl) => ({ fileName: imageUrl, imageUrl }))
   })
 
   return Object.fromEntries(
-    Object.entries(imageMap).map(([dayIndex, entries]) => {
-      const featuredPrefix = `day${Number(dayIndex) + 1}-${featuredSuffix}`
-      const sortedEntries = [...entries].sort((entryA, entryB) =>
-        sortGalleryFiles(entryA.fileName, entryB.fileName, featuredPrefix),
-      )
-
-      return [
-        Number(dayIndex),
-        sortedEntries
-          .map((entry) => entry.imageUrl)
-          .filter((entryUrl) => entryUrl.length > 0),
-      ]
-    }),
+    Object.entries(imageMap).map(([dayIdx, entries]) => [
+      Number(dayIdx),
+      entries.map((entry) => entry.imageUrl),
+    ]),
   ) as Record<number, string[]>
 }
 
-const locationImagesByDay = buildImageMap(locationImageModules, 'location', 'locations')
-const accommodationImagesByDay = buildImageMap(accommodationImageModules, 'accomodation', 'accommodations')
+const getLocationImages = (dayNumber: number, locationImagesByDay: Record<number, string[]>): string[] =>
+  locationImagesByDay[dayNumber] ?? []
 
-const getLocationImages = (dayNumber: number): string[] => locationImagesByDay[dayNumber] ?? []
-
-const getAccommodationImages = (dayNumber: number): string[] => {
-  const accommodationMap: Record<number, number> = { 0: 0, 1: 1, 2: 1, 3: 1, 4: 1, 5: 5, 6: 5, 7: 7, 8: 7, 9: 9 }
+const getAccommodationImages = (dayNumber: number, accommodationImagesByDay: Record<number, string[]>): string[] => {
   return accommodationImagesByDay[accommodationMap[dayNumber]] ?? []
 }
 
@@ -298,12 +309,10 @@ defaultTripDays[0] = {
   location: {
     name: 'Calgary International Airport',
     imageLabel: 'Calgary Airport exterior',
-    imageSrcs: getLocationImages(0),
   },
   accommodations: {
     name: 'Delta Hotels by Marriott Calgary Airport In-Terminal',
     imageLabel: 'Calgary Airport hotel exterior',
-    imageSrcs: getAccommodationImages(0),
   },
   itinerary: [
     'ORD -> YYC AA 1632 ( 8:50PM~11:43PM ) ✈️',
@@ -315,12 +324,10 @@ defaultTripDays[1] = {
   location: {
     name: 'Downtown Banff (Banff Ave & Mountain View)',
     imageLabel: 'Banff town and mountain view',
-    imageSrcs: getLocationImages(1),
   },
   accommodations: {
     name: 'Canmore Lodging',
     imageLabel: 'Accommodation exterior',
-    imageSrcs: getAccommodationImages(1),
   },
   itinerary: [
     'RentCar -> H-mart Shopping ( w/brunch)',
@@ -336,7 +343,6 @@ defaultTripDays[1] = {
 defaultTripDays[2].location = {
   ...defaultTripDays[2].location,
   imageLabel: 'Day 3 location view',
-  imageSrcs: getLocationImages(2),
 }
 
 defaultTripDays[2].itinerary = [
@@ -350,7 +356,6 @@ defaultTripDays[2].itinerary = [
 defaultTripDays[3].location = {
   ...defaultTripDays[3].location,
   imageLabel: 'Day 4 location view',
-  imageSrcs: getLocationImages(3),
 }
 
 defaultTripDays[3].itinerary = [
@@ -364,7 +369,6 @@ defaultTripDays[3].itinerary = [
 defaultTripDays[4].location = {
   ...defaultTripDays[4].location,
   imageLabel: 'Day 5 location view',
-  imageSrcs: getLocationImages(4),
 }
 
 defaultTripDays[4].itinerary = [
@@ -377,7 +381,6 @@ defaultTripDays[4].itinerary = [
 defaultTripDays[5].location = {
   ...defaultTripDays[5].location,
   imageLabel: 'Day 6 location view',
-  imageSrcs: getLocationImages(5),
 }
 
 defaultTripDays[5].itinerary = [
@@ -392,7 +395,6 @@ defaultTripDays[5].itinerary = [
 defaultTripDays[6].location = {
   ...defaultTripDays[6].location,
   imageLabel: 'Day 7 location view',
-  imageSrcs: getLocationImages(6),
 }
 
 defaultTripDays[6].itinerary = [
@@ -407,7 +409,6 @@ defaultTripDays[6].itinerary = [
 defaultTripDays[7].location = {
   ...defaultTripDays[7].location,
   imageLabel: 'Day 8 location view',
-  imageSrcs: getLocationImages(7),
 }
 
 defaultTripDays[7].itinerary = [
@@ -422,7 +423,6 @@ defaultTripDays[7].itinerary = [
 defaultTripDays[8].location = {
   ...defaultTripDays[8].location,
   imageLabel: 'Day 9 location view',
-  imageSrcs: getLocationImages(8),
 }
 
 defaultTripDays[8].itinerary = [
@@ -438,12 +438,10 @@ defaultTripDays[9] = {
   location: {
     name: 'Return to Chicago',
     imageLabel: 'Calgary Airport departure',
-    imageSrcs: getLocationImages(9),
   },
   accommodations: {
     name: '✈️',
     imageLabel: 'Calgary Downtown Hotel',
-    imageSrcs: getAccommodationImages(9),
   },
   itinerary: [
     'Calgary Brunch 🥞',
@@ -458,7 +456,6 @@ for (let dayIndex = 1; dayIndex <= 4; dayIndex += 1) {
     ...defaultTripDays[dayIndex].accommodations,
     name: 'Canmore Mountain Lodge',
     imageLabel: 'Accommodation used for Days 2 through 5',
-    imageSrcs: getAccommodationImages(dayIndex),
   }
 }
 
@@ -467,7 +464,6 @@ for (let dayIndex = 5; dayIndex <= 6; dayIndex += 1) {
     ...defaultTripDays[dayIndex].accommodations,
     name: 'Lake Louise Lodge',
     imageLabel: 'Accommodation used for Days 6 and 7',
-    imageSrcs: getAccommodationImages(dayIndex),
   }
 }
 
@@ -476,13 +472,14 @@ for (let dayIndex = 7; dayIndex <= 8; dayIndex += 1) {
     ...defaultTripDays[dayIndex].accommodations,
     name: 'Calgary Downtown Hotel',
     imageLabel: 'Accommodation used for Days 8 and 9',
-    imageSrcs: getAccommodationImages(dayIndex),
   }
 }
 
 function App() {
   const photoUploadRef = useRef<PhotoUploadHandle>(null)
   const [isPhotoUploading, setIsPhotoUploading] = useState(false)
+  const [locationImagesByDay, setLocationImagesByDay] = useState<Record<number, string[]>>({})
+  const [accommodationImagesByDay, setAccommodationImagesByDay] = useState<Record<number, string[]>>({})
 
   const {
     tripDays,
@@ -507,6 +504,36 @@ function App() {
   const selectedWeather = weatherByDay[selectedIndex]
   const selectedWeatherCity = dayWeatherCity[selectedIndex] ?? dayWeatherCity[dayWeatherCity.length - 1]
   const selectedLocationQuery = locationMapQueries[selectedIndex] ?? selectedDay.location.name
+  const selectedLocationImages = getLocationImages(selectedIndex, locationImagesByDay)
+  const selectedAccommodationImages = getAccommodationImages(selectedIndex, accommodationImagesByDay)
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) {
+      setLocationImagesByDay({})
+      setAccommodationImagesByDay({})
+      return
+    }
+
+    let isCancelled = false
+
+    const loadStockImages = async () => {
+      const [nextLocationImagesByDay, nextAccommodationImagesByDay] = await Promise.all([
+        buildImageMap('locations'),
+        buildImageMap('accommodations'),
+      ])
+
+      if (!isCancelled) {
+        setLocationImagesByDay(nextLocationImagesByDay)
+        setAccommodationImagesByDay(nextAccommodationImagesByDay)
+      }
+    }
+
+    loadStockImages()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [])
 
   const openInMaps = () => {
     window.open(getMapsUrl(selectedLocationQuery), '_blank', 'noopener,noreferrer')
@@ -539,9 +566,9 @@ function App() {
         <section className="content-section">
           <h2>Location 📍</h2>
           <article className="card">
-            {selectedDay.location.imageSrcs && selectedDay.location.imageSrcs.length > 0 ? (
+            {selectedLocationImages.length > 0 ? (
               <ImageGallery
-                images={selectedDay.location.imageSrcs}
+                images={selectedLocationImages}
                 imageLabel={selectedDay.location.imageLabel}
                 dayIndex={selectedIndex}
                 activeIndex={locationImageIndices[selectedIndex] || 0}
@@ -561,9 +588,9 @@ function App() {
         <section className="content-section">
           <h2>Accommodations 🏨</h2>
           <article className="card">
-            {selectedDay.accommodations.imageSrcs && selectedDay.accommodations.imageSrcs.length > 0 ? (
+            {selectedAccommodationImages.length > 0 ? (
               <ImageGallery
-                images={selectedDay.accommodations.imageSrcs}
+                images={selectedAccommodationImages}
                 imageLabel={selectedDay.accommodations.imageLabel}
                 dayIndex={selectedIndex}
                 activeIndex={accommodationImageIndices[selectedIndex] || 0}
