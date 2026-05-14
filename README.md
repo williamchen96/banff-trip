@@ -155,3 +155,28 @@ Add gallery images to:
 - `src/assets/accommodations/day1`, `day2`, `day6`, `day8`, `day10`
 
 Images are auto-discovered and rendered in the galleries.
+
+## Upload all stock assets to Supabase
+
+To bulk upload all existing images under `src/assets` into Supabase Storage:
+
+1. Ensure your `.env` has:
+
+```bash
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+2. Make sure your bucket exists (default: `trip-photos`) and allows uploads for your key/policies.
+
+3. Run:
+
+```bash
+npm run upload:assets
+```
+
+This uploads every image from `src/assets` to:
+
+`trip-photos/stock/...`
+
+with folder structure preserved.

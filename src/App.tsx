@@ -14,6 +14,9 @@ import type { TripDay } from './services/tripTypes'
 
 const tripStartDate = new Date(2026, 5, 28)
 const tripLength = 10
+const supabaseProjectUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const stockBucketName = 'trip-photos'
+const stockPrefix = 'stock'
 
 const locationMapQueries = [
   'Calgary International Airport',
@@ -41,17 +44,9 @@ const getMapsUrl = (query: string) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
 
-const locationImageModules = import.meta.glob('./assets/locations/day*/*.{png,jpg,jpeg,webp,avif,gif}', {
-  eager: true,
-  import: 'default',
-  query: '?url',
-}) as Record<string, string>
+const locationImageModules = import.meta.glob('./assets/locations/day*/*.{png,jpg,jpeg,webp,avif,gif}')
 
-const accommodationImageModules = import.meta.glob('./assets/accommodations/day*/*.{png,jpg,jpeg,webp,avif,gif}', {
-  eager: true,
-  import: 'default',
-  query: '?url',
-}) as Record<string, string>
+const accommodationImageModules = import.meta.glob('./assets/accommodations/day*/*.{png,jpg,jpeg,webp,avif,gif}')
 
 const sortGalleryFiles = (fileA: string, fileB: string, featuredPrefix: string) => {
   const aIsFeatured = fileA.startsWith(featuredPrefix)
@@ -68,10 +63,27 @@ const sortGalleryFiles = (fileA: string, fileB: string, featuredPrefix: string) 
   return fileA.localeCompare(fileB, undefined, { numeric: true })
 }
 
-const buildImageMap = (modules: Record<string, string>, featuredSuffix: 'location' | 'accomodation') => {
+const toSupabasePublicUrl = (assetRelativePath: string) => {
+  if (!supabaseProjectUrl) {
+    return ''
+  }
+
+  const encodedPath = assetRelativePath
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/')
+
+  return `${supabaseProjectUrl}/storage/v1/object/public/${stockBucketName}/${stockPrefix}/${encodedPath}`
+}
+
+const buildImageMap = (
+  modules: Record<string, () => Promise<unknown>>,
+  featuredSuffix: 'location' | 'accomodation',
+  category: 'locations' | 'accommodations',
+) => {
   const imageMap: Record<number, { fileName: string; imageUrl: string }[]> = {}
 
-  Object.entries(modules).forEach(([modulePath, imageUrl]) => {
+  Object.keys(modules).forEach((modulePath) => {
     const match = modulePath.match(/day(\d+)\/([^/]+)$/)
 
     if (!match) {
@@ -85,6 +97,9 @@ const buildImageMap = (modules: Record<string, string>, featuredSuffix: 'locatio
       imageMap[dayIndex] = []
     }
 
+    const assetRelativePath = `${category}/day${dayIndex + 1}/${fileName}`
+    const imageUrl = toSupabasePublicUrl(assetRelativePath)
+
     imageMap[dayIndex].push({ fileName, imageUrl })
   })
 
@@ -95,13 +110,18 @@ const buildImageMap = (modules: Record<string, string>, featuredSuffix: 'locatio
         sortGalleryFiles(entryA.fileName, entryB.fileName, featuredPrefix),
       )
 
-      return [Number(dayIndex), sortedEntries.map((entry) => entry.imageUrl)]
+      return [
+        Number(dayIndex),
+        sortedEntries
+          .map((entry) => entry.imageUrl)
+          .filter((entryUrl) => entryUrl.length > 0),
+      ]
     }),
   ) as Record<number, string[]>
 }
 
-const locationImagesByDay = buildImageMap(locationImageModules, 'location')
-const accommodationImagesByDay = buildImageMap(accommodationImageModules, 'accomodation')
+const locationImagesByDay = buildImageMap(locationImageModules, 'location', 'locations')
+const accommodationImagesByDay = buildImageMap(accommodationImageModules, 'accomodation', 'accommodations')
 
 const getLocationImages = (dayNumber: number): string[] => locationImagesByDay[dayNumber] ?? []
 
