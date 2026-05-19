@@ -4,6 +4,7 @@ import { DateChips } from './components/DateChips'
 import { ImageGallery } from './components/ImageGallery'
 import { ItineraryModal } from './components/ItineraryModal'
 import { PhotoUpload, type PhotoUploadHandle } from './components/PhotoUpload'
+import ReactMarkdown from 'react-markdown'
 import { TripCountdown } from './components/TripCountdown'
 import { WeatherCard } from './components/WeatherCard'
 import { useCollaborativeTrip } from './hooks/useCollaborativeTrip'
@@ -615,12 +616,12 @@ function App() {
               }}
             />
           </div>
-          <article className="card text-card">
-            <ul>
-              {selectedDay.itinerary.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+          <article className="card text-card itinerary-card">
+            {selectedDay.itinerary.map((item, itemIndex) => (
+              <div key={`${itemIndex}-${item}`} className="itinerary-markdown">
+                <ReactMarkdown>{item}</ReactMarkdown>
+              </div>
+            ))}
           </article>
         </section>
 
@@ -664,6 +665,17 @@ function App() {
               onUploadingChange={setIsPhotoUploading}
             />
           </article>
+          {(selectedDay.uploadedPhotos?.length ?? 0) > 0 && (
+            <div className="photo-remove-outside-wrap">
+              <button
+                type="button"
+                className="photo-remove-btn"
+                onClick={() => photoUploadRef.current?.requestRemoveCurrent()}
+              >
+                🗑️ Remove Photo
+              </button>
+            </div>
+          )}
         </section>
       </section>
     </main>

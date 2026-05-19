@@ -437,6 +437,15 @@
   text-decoration-thickness: 1px;
 }
 
+.itinerary-markdown p {
+  margin: 0;
+}
+
+.itinerary-card {
+  display: grid;
+  gap: 0.45rem;
+}
+
 .last-section {
   padding-bottom: 1.1rem;
 }
@@ -556,6 +565,30 @@
   flex: 1;
 }
 
+.itinerary-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.7rem;
+}
+
+.toolbar-btn {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #fff;
+  color: #1f1c1d;
+  border-radius: 6px;
+  min-height: 30px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toolbar-btn:hover {
+  background: #ececf1;
+}
+
 .itinerary-textarea {
   width: 100%;
   min-height: 200px;
@@ -668,10 +701,10 @@
   cursor: not-allowed;
 }
 
-.photo-actions {
-  padding: 0.8rem 1rem 0;
+.photo-remove-outside-wrap {
+  margin-top: 0.7rem;
   display: flex;
-  gap: 0.5rem;
+  justify-content: center;
 }
 
 .photo-remove-btn {

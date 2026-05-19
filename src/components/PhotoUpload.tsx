@@ -11,6 +11,7 @@ type PhotoUploadProps = {
 
 export type PhotoUploadHandle = {
   trigger: () => void
+  requestRemoveCurrent: () => void
 }
 
 export const PhotoUpload = forwardRef<PhotoUploadHandle, PhotoUploadProps>(
@@ -23,6 +24,11 @@ export const PhotoUpload = forwardRef<PhotoUploadHandle, PhotoUploadProps>(
 
     useImperativeHandle(ref, () => ({
       trigger: () => fileInputRef.current?.click(),
+      requestRemoveCurrent: () => {
+        if (uploadedPhotos.length > 0) {
+          setShowRemoveConfirm(true)
+        }
+      },
     }))
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,18 +128,6 @@ export const PhotoUpload = forwardRef<PhotoUploadHandle, PhotoUploadProps>(
           )}
 
           {error && <p className="photo-upload-error">{error}</p>}
-
-          {uploadedPhotos.length > 0 && (
-            <div className="photo-actions">
-              <button
-                type="button"
-                className="photo-remove-btn"
-                onClick={() => setShowRemoveConfirm(true)}
-              >
-                🗑️ Remove Photo
-              </button>
-            </div>
-          )}
 
           <input
             ref={fileInputRef}
